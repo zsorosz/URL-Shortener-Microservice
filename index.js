@@ -1,10 +1,13 @@
 require("dotenv").config();
+require("./db");
+
 const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const app = express();
 const dns = require("dns");
 const url = require("url");
+const Url = require("./models/Url.model");
 
 // Basic Configuration
 const port = process.env.PORT || 3000;
@@ -28,14 +31,19 @@ app.get("/api/hello", function (req, res) {
   res.json({ greeting: "hello API" });
 });
 
-app.post("/api/shorturl", function (req, res) {
+app.post("/api/shorturl", async (req, res) => {
   const urlInput = req.body.url;
   const parsedUrl = url.parse(urlInput);
-  dns.lookup(parsedUrl.hostname, (err, addresses) => {
+  dns.lookup(parsedUrl.hostname, async (err, addresses) => {
     if (err || addresses === undefined) {
       res.json({ error: "invalid url" });
     } else {
-      res.json({ original_url: req.body.url });
+      let r = (Math.random() + 1).toString(36).substring(7);
+      await Url.create({
+        original_url: req.body.url,
+        short_url: r,
+      });
+      res.json({ original_url: req.body.url, short_url: r });
     }
   });
 });
