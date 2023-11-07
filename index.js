@@ -31,21 +31,31 @@ app.get("/api/hello", function (req, res) {
   res.json({ greeting: "hello API" });
 });
 
+//Shorten URL and save in DB
 app.post("/api/shorturl", async (req, res) => {
-  const urlInput = req.body.url;
+  let urlInput = req.body.url;
   const parsedUrl = url.parse(urlInput);
+  if (!/^https?:\/\//i.test(parsedUrl.href)) {
+    urlInput = "http://" + parsedUrl.href;
+  }
   dns.lookup(parsedUrl.hostname, async (err, addresses) => {
     if (err || addresses === undefined) {
       res.json({ error: "invalid url" });
     } else {
       let r = (Math.random() + 1).toString(36).substring(7);
       await Url.create({
-        original_url: req.body.url,
+        original_url: urlInput,
         short_url: r,
       });
-      res.json({ original_url: req.body.url, short_url: r });
+      res.json({ original_url: urlInput, short_url: r });
     }
   });
+});
+
+//Find in DB by shorturl and redirect to original URL
+app.get("/api/shorturl/:url", async (req, res) => {
+  const urlObject = await Url.findOne({ short_url: req.params.url });
+  res.status(301).redirect(urlObject.original_url);
 });
 
 app.listen(port, function () {
