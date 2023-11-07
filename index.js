@@ -35,11 +35,8 @@ app.get("/api/hello", function (req, res) {
 app.post("/api/shorturl", async (req, res) => {
   let urlInput = req.body.url;
   const parsedUrl = url.parse(urlInput);
-  if (!/^https?:\/\//i.test(parsedUrl.href)) {
-    urlInput = "http://" + parsedUrl.href;
-  }
   dns.lookup(parsedUrl.hostname, async (err, addresses) => {
-    if (err || addresses === undefined) {
+    if (err || addresses === undefined || parsedUrl.hostname === null) {
       res.json({ error: "invalid url" });
     } else {
       let r = (Math.random() + 1).toString(36).substring(7);
